@@ -1,6 +1,8 @@
 package workorder
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -14,9 +16,29 @@ func Init(router *gin.Engine) {
 	{
 		group.GET("/find", FindWorkOrders)
 		group.GET("/:id", GetWorkOrder)
-		group.POST("", workOrderService.Save)
+		group.POST("", Save)
 		group.PATCH("/:id", UpdateWorkOrder)
 	}
+}
+
+// Save bulk-creates work orders from a Frappe sales-order JSON array
+// (or a single object / {"data": ...} envelope).
+func Save(c *gin.Context) {
+	body, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	actor := c.GetHeader("X-User")
+	if actor == "" {
+		actor = "system"
+	}
+	result, err := workOrderService.Save(json.RawMessage(body), actor)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "Work orders created successfully", "data": result})
 }
 
 // GetWorkOrder returns one work order with its items.
