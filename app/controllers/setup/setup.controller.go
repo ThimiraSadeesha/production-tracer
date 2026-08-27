@@ -143,7 +143,7 @@ func CreateDepartments(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	result, err := departmentSvc.CreateDepartments(payload, "system")
+	result, err := departmentSvc.CreateDepartments(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -163,7 +163,7 @@ func UpdateDepartment(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	depID, err := departmentSvc.UpdateDepartment(id, updates, "system")
+	depID, err := departmentSvc.UpdateDepartment(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -215,7 +215,11 @@ func CreateUnit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Unit code and name are required"})
 		return
 	}
-	id, err := unitSvc.CreateUnit(dto, "system")
+	createdBy := ""
+	if dto.CreatedBy != nil {
+		createdBy = *dto.CreatedBy
+	}
+	id, err := unitSvc.CreateUnit(dto, helper.ResolveActor(c, createdBy))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -235,7 +239,7 @@ func UpdateUnit(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	unitID, err := unitSvc.UpdateUnit(id, updates, "system")
+	unitID, err := unitSvc.UpdateUnit(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -298,7 +302,7 @@ func CreateProcesses(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	count, err := processSvc.CreateProcesses(payload, "system")
+	count, err := processSvc.CreateProcesses(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -318,7 +322,7 @@ func UpdateProcess(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	processID, err := processSvc.UpdateProcess(id, updates, "system")
+	processID, err := processSvc.UpdateProcess(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -399,7 +403,7 @@ func CreateOperators(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	result, err := operatorSvc.CreateOperators(payload, "system")
+	result, err := operatorSvc.CreateOperators(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -419,7 +423,7 @@ func UpdateOperator(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	operatorID, err := operatorSvc.UpdateOperator(id, updates, "system")
+	operatorID, err := operatorSvc.UpdateOperator(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -511,7 +515,7 @@ func CreateShifts(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	result, err := shiftSvc.CreateShifts(payload, "system")
+	result, err := shiftSvc.CreateShifts(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -531,7 +535,7 @@ func UpdateShift(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	shiftID, err := shiftSvc.UpdateShift(id, updates, "system")
+	shiftID, err := shiftSvc.UpdateShift(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -605,7 +609,7 @@ func CreateDevices(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	result, err := deviceSvc.CreateDevices(payload, "system")
+	result, err := deviceSvc.CreateDevices(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -625,7 +629,7 @@ func UpdateDevice(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	deviceID, err := deviceSvc.UpdateDevice(id, updates, "system")
+	deviceID, err := deviceSvc.UpdateDevice(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -663,7 +667,7 @@ func CreateMachineTypes(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	result, err := machineTypeSvc.CreateMachineTypes(payload, "system")
+	result, err := machineTypeSvc.CreateMachineTypes(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -715,7 +719,7 @@ func CreateMachines(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	result, err := machineSvc.CreateMachines(payload, "system")
+	result, err := machineSvc.CreateMachines(payload, helper.ResolveActor(c, helper.ActorFromJSON(payload)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -735,7 +739,7 @@ func UpdateMachine(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	machineID, err := machineSvc.UpdateMachine(id, updates, "system")
+	machineID, err := machineSvc.UpdateMachine(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

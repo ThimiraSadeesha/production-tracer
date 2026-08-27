@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	workOrderService "github.com/thimira/production-tracer/app/services/work-order"
+	"github.com/thimira/production-tracer/internal/helper"
 )
 
 func Init(router *gin.Engine) {
@@ -29,11 +30,8 @@ func Save(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	actor := c.GetHeader("X-User")
-	if actor == "" {
-		actor = "system"
-	}
-	result, err := workOrderService.Save(json.RawMessage(body), actor)
+	raw := json.RawMessage(body)
+	result, err := workOrderService.Save(raw, helper.ResolveActor(c, helper.ActorFromJSON(raw)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -84,7 +82,7 @@ func UpdateWorkOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	woID, err := workOrderService.UpdateWorkOrder(id, updates, "system")
+	woID, err := workOrderService.UpdateWorkOrder(id, updates, helper.ResolveActor(c, helper.ActorFromMap(updates)))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

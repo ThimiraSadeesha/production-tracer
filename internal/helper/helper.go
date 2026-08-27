@@ -1,6 +1,8 @@
 package helper
 
 import (
+	"bytes"
+	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -13,6 +15,63 @@ func Actor(c *gin.Context) string {
 		return a
 	}
 	return "system"
+}
+
+// ResolveActor prefers a value from the JSON body, then X-User, then "system".
+func ResolveActor(c *gin.Context, fromBody string) string {
+	if s := strings.TrimSpace(fromBody); s != "" {
+		return s
+	}
+	return Actor(c)
+}
+
+// ActorFromMap reads createdBy/updatedBy from a JSON object.
+func ActorFromMap(m map[string]interface{}) string {
+	if m == nil {
+		return ""
+	}
+	for _, k := range []string{"updatedBy", "createdBy", "updated_by", "created_by"} {
+		if s, ok := m[k].(string); ok {
+			if s = strings.TrimSpace(s); s != "" {
+				return s
+			}
+		}
+	}
+	return ""
+}
+
+// ActorFromJSON reads createdBy/updatedBy from a JSON array or object.
+func ActorFromJSON(raw json.RawMessage) string {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return ""
+	}
+	if trimmed[0] == '[' {
+		var arr []map[string]interface{}
+		if err := json.Unmarshal(trimmed, &arr); err != nil {
+			return ""
+		}
+		for _, item := range arr {
+			if s := ActorFromMap(item); s != "" {
+				return s
+			}
+		}
+		return ""
+	}
+	var obj map[string]interface{}
+	if err := json.Unmarshal(trimmed, &obj); err != nil {
+		return ""
+	}
+	if s := ActorFromMap(obj); s != "" {
+		return s
+	}
+	if data, ok := obj["data"]; ok {
+		b, err := json.Marshal(data)
+		if err == nil {
+			return ActorFromJSON(b)
+		}
+	}
+	return ""
 }
 
 // Nullable returns nil for an empty string so the SP treats it as NULL / no filter.
