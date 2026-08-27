@@ -1,0 +1,497 @@
+{
+  "info": {
+    "name": "Production Tracer API",
+    "description": "Current endpoints: health, setup master-data (departments, units, processes, operators, shifts, devices) and work-orders. Base URL and actor are collection variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "actor", "value": "thimira" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Departments",
+      "item": [
+        {
+          "name": "List all",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/departments", "host": ["{{baseUrl}}"], "path": ["setup", "departments"] }
+          }
+        },
+        {
+          "name": "Find (filter + cursor)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/departments/find?code=&name=&status=&cursor=&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "departments", "find"],
+              "query": [
+                { "key": "code", "value": "" },
+                { "key": "name", "value": "" },
+                { "key": "status", "value": "" },
+                { "key": "cursor", "value": "", "description": "last id of previous page; empty/-1 for first page" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/departments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "departments", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departmentCode\": \"DEP-001\",\n  \"departmentName\": \"Printing\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/setup/departments", "host": ["{{baseUrl}}"], "path": ["setup", "departments"] }
+          }
+        },
+        {
+          "name": "Update (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departmentName\": \"Digital Printing\",\n  \"departmentStatus\": \"Active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/setup/departments/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "departments", ":id"],
+              "variable": [{ "key": "id", "value": "1" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Units",
+      "item": [
+        {
+          "name": "List all",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/setup/units", "host": ["{{baseUrl}}"], "path": ["setup", "units"] } }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/units/:id", "host": ["{{baseUrl}}"], "path": ["setup", "units", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"unitCode\": \"PCS\",\n  \"unitName\": \"Pieces\",\n  \"unitSymbol\": \"pcs\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/units", "host": ["{{baseUrl}}"], "path": ["setup", "units"] }
+          }
+        },
+        {
+          "name": "Update (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"unitName\": \"Pieces\",\n  \"unitStatus\": \"Active\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/units/:id", "host": ["{{baseUrl}}"], "path": ["setup", "units", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Processes",
+      "item": [
+        {
+          "name": "List all",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/setup/processes", "host": ["{{baseUrl}}"], "path": ["setup", "processes"] } }
+        },
+        {
+          "name": "By department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/processes/department/:departmentId", "host": ["{{baseUrl}}"], "path": ["setup", "processes", "department", ":departmentId"], "variable": [{ "key": "departmentId", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/processes/:id", "host": ["{{baseUrl}}"], "path": ["setup", "processes", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Create (bulk array)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"code\": \"PRC-001\",\n    \"name\": \"Offset Printing\",\n    \"status\": \"Active\",\n    \"isRequired\": 1,\n    \"departmentId\": 1,\n    \"processAttributes\": [\n      { \"attributeName\": \"Impressions\", \"isRequired\": 1 },\n      { \"attributeName\": \"Waste\", \"isRequired\": 0 }\n    ]\n  }\n]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/setup/processes", "host": ["{{baseUrl}}"], "path": ["setup", "processes"] }
+          }
+        },
+        {
+          "name": "Update (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"PRC-001\",\n  \"name\": \"Offset Printing\",\n  \"status\": \"Active\",\n  \"isRequired\": 1,\n  \"departmentId\": 1\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/processes/:id", "host": ["{{baseUrl}}"], "path": ["setup", "processes", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Operators",
+      "item": [
+        {
+          "name": "Find (filter + cursor)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/operators/find?empNo=&name=&section=&status=&departmentId=-1&cursor=-1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "operators", "find"],
+              "query": [
+                { "key": "empNo", "value": "" },
+                { "key": "name", "value": "" },
+                { "key": "section", "value": "" },
+                { "key": "status", "value": "" },
+                { "key": "departmentId", "value": "-1", "description": "-1 = any department" },
+                { "key": "cursor", "value": "-1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By shift + department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/operators/by-shift?departmentId=1&shiftId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "operators", "by-shift"],
+              "query": [
+                { "key": "departmentId", "value": "1" },
+                { "key": "shiftId", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/operators/department/:departmentId", "host": ["{{baseUrl}}"], "path": ["setup", "operators", "department", ":departmentId"], "variable": [{ "key": "departmentId", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/operators/:id", "host": ["{{baseUrl}}"], "path": ["setup", "operators", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"empNo\": \"EMP-001\",\n  \"name\": \"Kamal\",\n  \"section\": \"Press\",\n  \"status\": \"Active\",\n  \"departmentId\": 1\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/operators", "host": ["{{baseUrl}}"], "path": ["setup", "operators"] }
+          }
+        },
+        {
+          "name": "Update (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Kamal Perera\",\n  \"section\": \"Press\",\n  \"status\": \"Active\",\n  \"departmentId\": 1\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/operators/:id", "host": ["{{baseUrl}}"], "path": ["setup", "operators", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Shifts",
+      "item": [
+        {
+          "name": "List all",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/setup/shifts", "host": ["{{baseUrl}}"], "path": ["setup", "shifts"] } }
+        },
+        {
+          "name": "Output history (find)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/shifts/output-history?departmentId=-1&shiftId=-1&from=&to=",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "shifts", "output-history"],
+              "query": [
+                { "key": "departmentId", "value": "-1" },
+                { "key": "shiftId", "value": "-1" },
+                { "key": "from", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "to", "value": "", "description": "YYYY-MM-DD" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "By department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/shifts/department/:departmentId", "host": ["{{baseUrl}}"], "path": ["setup", "shifts", "department", ":departmentId"], "variable": [{ "key": "departmentId", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/shifts/:id", "host": ["{{baseUrl}}"], "path": ["setup", "shifts", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Get output history (by shift)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/shifts/:id/output-history?from=&to=",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "shifts", ":id", "output-history"],
+              "variable": [{ "key": "id", "value": "1" }],
+              "query": [
+                { "key": "from", "value": "", "description": "YYYY-MM-DD" },
+                { "key": "to", "value": "", "description": "YYYY-MM-DD" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"shift\": \"Day\",\n  \"startDate\": \"2026-08-27\",\n  \"startTime\": \"08:00:00\",\n  \"endDate\": \"2026-08-27\",\n  \"endTime\": \"17:00:00\",\n  \"departmentId\": 1,\n  \"status\": \"Active\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/shifts", "host": ["{{baseUrl}}"], "path": ["setup", "shifts"] }
+          }
+        },
+        {
+          "name": "Update (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"shiftName\": \"Day\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"17:00:00\",\n  \"departmentId\": 1,\n  \"status\": \"Active\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/shifts/:id", "host": ["{{baseUrl}}"], "path": ["setup", "shifts", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Setup / Devices",
+      "item": [
+        {
+          "name": "Find (filter + cursor)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/setup/devices/find?androidId=&processId=-1&status=&machineId=-1&cursor=-1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["setup", "devices", "find"],
+              "query": [
+                { "key": "androidId", "value": "" },
+                { "key": "processId", "value": "-1", "description": "-1 = any" },
+                { "key": "status", "value": "" },
+                { "key": "machineId", "value": "-1", "description": "-1 = any" },
+                { "key": "cursor", "value": "-1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Identify (heartbeat)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/devices/identify/:androidId", "host": ["{{baseUrl}}"], "path": ["setup", "devices", "identify", ":androidId"], "variable": [{ "key": "androidId", "value": "android-abc-123" }] }
+          }
+        },
+        {
+          "name": "Get by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/setup/devices/:id", "host": ["{{baseUrl}}"], "path": ["setup", "devices", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Create (bulk array)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"appVersion\": \"1.0.0\",\n    \"lastSeenAt\": \"2026-08-27 09:00:00\",\n    \"status\": \"Online\",\n    \"deviceType\": \"Terminal\",\n    \"processId\": 1,\n    \"androidId\": \"android-abc-123\",\n    \"machineIds\": [1, 2]\n  }\n]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/setup/devices", "host": ["{{baseUrl}}"], "path": ["setup", "devices"] }
+          }
+        },
+        {
+          "name": "Update (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"appVersion\": \"1.0.1\",\n  \"status\": \"Online\",\n  \"deviceType\": \"Terminal\",\n  \"machineId\": 1,\n  \"processId\": 1,\n  \"androidId\": \"android-abc-123\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/setup/devices/:id", "host": ["{{baseUrl}}"], "path": ["setup", "devices", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Work Orders",
+      "item": [
+        {
+          "name": "Import / Create (Frappe sales order)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"name\": \"SAL-ORD-2026-00302\",\n    \"customer_name\": \"Savinda Graphic Systems (Pvt) LTD.\",\n    \"po_no\": \"PUR-ORD-2026-01382\",\n    \"order_type\": \"Sales\",\n    \"title\": \"PUR-ORD-2026-01382\",\n    \"total_qty\": 9529,\n    \"delivery_date\": \"2026-08-13\",\n    \"items\": [\n      {\n        \"name\": \"d19gjub3d1\",\n        \"item_code\": \"STK-000087\",\n        \"item_name\": \"SKIMS STICKER\",\n        \"custom_sales_order_item_reference\": \"SAL-ORD-2026-00302-001\",\n        \"description\": \"<p>19897 SML</p>\",\n        \"item_group\": \"Sticker\",\n        \"qty\": 1760,\n        \"stock_uom\": \"Nos\",\n        \"uom\": \"Nos\",\n        \"delivery_date\": \"2026-08-13\"\n      }\n    ]\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/work-orders", "host": ["{{baseUrl}}"], "path": ["work-orders"] }
+          }
+        },
+        {
+          "name": "Find (filter + cursor)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/work-orders/find?reference=&customer=&status=&cursor=&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["work-orders", "find"],
+              "query": [
+                { "key": "reference", "value": "" },
+                { "key": "customer", "value": "" },
+                { "key": "status", "value": "" },
+                { "key": "cursor", "value": "" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get by id (with items)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/work-orders/:id", "host": ["{{baseUrl}}"], "path": ["work-orders", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        },
+        {
+          "name": "Update header (patch)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-User", "value": "{{actor}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Savinda Graphic Systems (Pvt) LTD.\",\n  \"poNo\": \"PUR-ORD-2026-01382\",\n  \"title\": \"PUR-ORD-2026-01382\",\n  \"quantity\": 9529,\n  \"deliveryDate\": \"2026-08-13\",\n  \"status\": \"InProgress\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/work-orders/:id", "host": ["{{baseUrl}}"], "path": ["work-orders", ":id"], "variable": [{ "key": "id", "value": "1" }] }
+          }
+        }
+      ]
+    }
+  ]
+}
