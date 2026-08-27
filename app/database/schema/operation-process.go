@@ -22,7 +22,7 @@ type OperationProcess struct {
 	MachineID         *int           `json:"machineId" gorm:"column:machine_id;index:idx_op_order_dup,priority:4;index:idx_op_item_dup,priority:4"`
 	WorkOrderItemID   *int           `json:"workOrderItemId,omitempty" gorm:"column:work_order_item_id;index:idx_op_woi_status,priority:1;index:idx_op_item_dup,priority:1"`
 	WorkOrderID       *int           `json:"workOrderId,omitempty" gorm:"column:work_order_id;index:idx_op_wo_scope_status,priority:1;index:idx_op_order_dup,priority:1"`
-	OperationScope    OperationScope `json:"operationScope" gorm:"type:enum('ITEMS','ORDER');column:operation_scope;default:ITEMS;index:idx_op_wo_scope_status,priority:2;index:idx_op_order_dup,priority:3;index:idx_op_item_dup,priority:3"`
+	OperationScope    OperationScope `json:"operationScope" gorm:"type:enum('ITEMS','ORDER','PARTIAL');column:operation_scope;default:ITEMS;index:idx_op_wo_scope_status,priority:2"`
 	ProcessID         int            `json:"processId" gorm:"column:process_id;index:idx_op_order_dup,priority:2;index:idx_op_item_dup,priority:2"`
 	IsRedo            bool           `json:"isRedo" gorm:"column:is_redo;default:false"`
 	Remark            *string        `json:"remark" gorm:"type:varchar(255);column:remark"`
@@ -50,6 +50,7 @@ func (OperationProcess) TableName() string {
 type OperationScope string
 
 const (
-	OperationScopeItems OperationScope = "ITEMS"
-	OperationScopeOrder OperationScope = "ORDER"
+	OperationScopeItems   OperationScope = "ITEMS"
+	OperationScopeOrder   OperationScope = "ORDER"
+	OperationScopePartial OperationScope = "PARTIAL"
 )
