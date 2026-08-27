@@ -12,8 +12,7 @@ type OperationProcess struct {
 	PlanDateTime      LocalDateTime  `json:"planDateTime" gorm:"column:plan_date_time;type:datetime"`
 	StartedDateTime   time.Time      `json:"startedDateTime" gorm:"column:started_date_time"`
 	CompletedDateTime time.Time      `json:"completedDateTime" gorm:"column:completed_date_time"`
-	PlannedQuantity   float64        `json:"plannedQuantity" gorm:"column:planned_quantity;type:decimal(15,2);default:0"`
-	ExpectedValue     float64        `json:"expectedValue" gorm:"column:expected_value;type:decimal(15,2);default:0"`
+	PlannedValue      float64        `json:"plannedValue" gorm:"column:planned_value;type:decimal(15,2);default:0"`
 	ActualValue       float64        `json:"actualValue" gorm:"column:actual_value;type:decimal(15,2);default:0"`
 	Status            string         `json:"status" gorm:"type:varchar(100);column:status;index:idx_op_woi_status,priority:2;index:idx_op_wo_scope_status,priority:3"`
 	EstimateTime      float64        `json:"estimateTime" gorm:"column:estimate_time;default:0"`

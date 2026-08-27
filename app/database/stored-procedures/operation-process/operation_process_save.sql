@@ -100,10 +100,8 @@ BEGIN
                                                work_order_item_id,
                                                work_order_id,
                                                operation_scope,
-
                                                process_id,
-                                               planned_quantity,
-                                               expected_value,
+                                               planned_value,
                                                created_by)
             VALUES (JSON_VALUE(v_elem, '$.planDateTime'),
                     JSON_VALUE(v_elem, '$.sequence'),
@@ -114,8 +112,7 @@ BEGIN
                     v_wo_id,
                     v_scope,
                     v_process_id,
-                    JSON_VALUE(v_elem, '$.plannedQuantity'),
-                    JSON_VALUE(v_elem, '$.expectedValue'),
+                    JSON_VALUE(v_elem, '$.plannedValue'),
                     created_by_val);
 
             SET v_inserted_id = LAST_INSERT_ID();
