@@ -18,7 +18,7 @@ BEGIN
            m.machine_code    AS machineCode,
            m.machine_name    AS machineName,
            m.description     AS description,
-           m.capabilities    AS capabilities,
+
            m.status          AS machineStatus,
            m.hourly_output   AS hourlyOutput,
            m.make_ready_time AS makeReadyTime,

@@ -29,7 +29,6 @@ BEGIN
     SET machine_code       = IFNULL(machine_code_val, machine_code),
         machine_name       = IFNULL(machine_name_val, machine_name),
         description        = IFNULL(description_val, description),
-        capabilities       = IFNULL(capabilities_val, capabilities),
         status             = IFNULL(status_val, status),
         hourly_output      = IFNULL(hourly_output_val, hourly_output),
         machine_type_id    = IFNULL(machine_type_id_val, machine_type_id),
