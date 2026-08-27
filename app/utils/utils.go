@@ -144,6 +144,9 @@ func ProcessJsonData[T any](row map[string]interface{}, keys ...string) {
 			}
 			row[key] = parsedList
 
+		case map[string]interface{}:
+			row[key] = v
+
 		default:
 			var zero T
 			row[key] = zero

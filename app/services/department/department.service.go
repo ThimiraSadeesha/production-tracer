@@ -1,7 +1,8 @@
 package department
 
 import (
-	"github.com/thimira/production-tracer/app/database/schema"
+	"encoding/json"
+
 	"github.com/thimira/production-tracer/app/utils"
 	"github.com/thimira/production-tracer/internal/db"
 )
@@ -38,17 +39,14 @@ func FindDepartments(departmentCode, departmentName, departmentStatus string, cu
 	)
 }
 
-// CreateDepartment inserts a department and returns its id.
-func CreateDepartment(department schema.Department, createdBy string) (int, error) {
-	result, err := db.CallProcedure[map[string]interface{}]("department_save",
-		department.DepartmentCode,
-		department.DepartmentName,
-		createdBy,
-	)
+// CreateDepartments bulk-inserts departments from a JSON array (or a single object).
+func CreateDepartments(payload json.RawMessage, createdBy string) (map[string]interface{}, error) {
+	result, err := db.CallProcedure[map[string]interface{}]("department_save", string(payload), createdBy)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return utils.ToInt(result["departmentId"])
+	utils.ProcessJsonData[[]interface{}](result, "insertedIds")
+	return result, nil
 }
 
 // UpdateDepartment patches a department (0 id when not found).

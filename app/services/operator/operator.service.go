@@ -1,7 +1,8 @@
 package operator
 
 import (
-	"github.com/thimira/production-tracer/app/database/schema"
+	"encoding/json"
+
 	"github.com/thimira/production-tracer/app/utils"
 	"github.com/thimira/production-tracer/internal/db"
 )
@@ -44,15 +45,14 @@ func FindOperatorsByShiftDept(departmentID, shiftID int64) (map[string]interface
 	return result, nil
 }
 
-// CreateOperator inserts an operator and returns its id.
-func CreateOperator(op schema.Operator, createdBy string) (int, error) {
-	result, err := db.CallProcedure[map[string]interface{}]("operator_save",
-		op.EmpNo, op.Name, op.Section, op.Status, op.DepartmentID, createdBy,
-	)
+// CreateOperators bulk-inserts operators from a JSON array (or a single object).
+func CreateOperators(payload json.RawMessage, createdBy string) (map[string]interface{}, error) {
+	result, err := db.CallProcedure[map[string]interface{}]("operator_save", string(payload), createdBy)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return utils.ToInt(result["operatorId"])
+	utils.ProcessJsonData[[]interface{}](result, "insertedIds")
+	return result, nil
 }
 
 // UpdateOperator patches an operator (0 id when not found).

@@ -1,6 +1,8 @@
 package shift
 
 import (
+	"encoding/json"
+
 	"github.com/thimira/production-tracer/app/utils"
 	"github.com/thimira/production-tracer/internal/db"
 )
@@ -39,26 +41,14 @@ func FindShiftOutputHistory(departmentID, shiftID int64, from, to string) ([]map
 	)
 }
 
-// CreateShift inserts a shift (map payload, since the model has no start_time).
-func CreateShift(payload map[string]interface{}, createdBy string) (int, error) {
-	name := payload["shift"]
-	if name == nil {
-		name = payload["shiftName"]
-	}
-	result, err := db.CallProcedure[map[string]interface{}]("shift_save",
-		name,
-		payload["startDate"],
-		payload["startTime"],
-		payload["endDate"],
-		payload["endTime"],
-		payload["departmentId"],
-		payload["status"],
-		createdBy,
-	)
+// CreateShifts bulk-inserts shifts from a JSON array (or a single object).
+func CreateShifts(payload json.RawMessage, createdBy string) (map[string]interface{}, error) {
+	result, err := db.CallProcedure[map[string]interface{}]("shift_save", string(payload), createdBy)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return utils.ToInt(result["shiftId"])
+	utils.ProcessJsonData[[]interface{}](result, "insertedIds")
+	return result, nil
 }
 
 // UpdateShift patches a shift (0 id when not found; SP returns no row on success).

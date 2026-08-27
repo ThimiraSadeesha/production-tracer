@@ -11,6 +11,8 @@ import (
 	"github.com/thimira/production-tracer/app/database/schema"
 	departmentSvc "github.com/thimira/production-tracer/app/services/department"
 	deviceSvc "github.com/thimira/production-tracer/app/services/device"
+	machineSvc "github.com/thimira/production-tracer/app/services/machine"
+	machineTypeSvc "github.com/thimira/production-tracer/app/services/machine-type"
 	operatorSvc "github.com/thimira/production-tracer/app/services/operator"
 	processSvc "github.com/thimira/production-tracer/app/services/process"
 	shiftSvc "github.com/thimira/production-tracer/app/services/shift"
@@ -27,7 +29,7 @@ func Init(router *gin.Engine) {
 		departments.GET("", GetDepartments)
 		departments.GET("/find", FindDepartments)
 		departments.GET("/:id", GetDepartment)
-		departments.POST("", CreateDepartment)
+		departments.POST("", CreateDepartments)
 		departments.PATCH("/:id", UpdateDepartment)
 	}
 
@@ -54,7 +56,7 @@ func Init(router *gin.Engine) {
 		operators.GET("/by-shift", FindOperatorsByShiftDept)
 		operators.GET("/department/:departmentId", GetOperatorsByDepartment)
 		operators.GET("/:id", GetOperator)
-		operators.POST("", CreateOperator)
+		operators.POST("", CreateOperators)
 		operators.PATCH("/:id", UpdateOperator)
 	}
 
@@ -65,7 +67,7 @@ func Init(router *gin.Engine) {
 		shifts.GET("/department/:departmentId", GetShiftsByDepartment)
 		shifts.GET("/:id", GetShift)
 		shifts.GET("/:id/output-history", GetShiftOutputHistory)
-		shifts.POST("", CreateShift)
+		shifts.POST("", CreateShifts)
 		shifts.PATCH("/:id", UpdateShift)
 	}
 
@@ -76,6 +78,20 @@ func Init(router *gin.Engine) {
 		devices.GET("/:id", GetDevice)
 		devices.POST("", CreateDevices)
 		devices.PATCH("/:id", UpdateDevice)
+	}
+
+	machineTypes := setup.Group("/machine-types")
+	{
+		machineTypes.GET("/:id", GetMachineType)
+		machineTypes.POST("", CreateMachineTypes)
+	}
+
+	machines := setup.Group("/machines")
+	{
+		machines.GET("/find", FindMachines)
+		machines.GET("/:id", GetMachine)
+		machines.POST("", CreateMachines)
+		machines.PATCH("/:id", UpdateMachine)
 	}
 }
 
@@ -120,23 +136,19 @@ func FindDepartments(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": departments})
 }
 
-// CreateDepartment creates a department.
-func CreateDepartment(c *gin.Context) {
-	var dto schema.Department
-	if err := c.ShouldBindJSON(&dto); err != nil {
+// CreateDepartments bulk-creates departments from a JSON array (or a single object).
+func CreateDepartments(c *gin.Context) {
+	var payload json.RawMessage
+	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	if dto.DepartmentCode == "" || dto.DepartmentName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Department code and name are required"})
-		return
-	}
-	id, err := departmentSvc.CreateDepartment(dto, "system")
+	result, err := departmentSvc.CreateDepartments(payload, "system")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"message": "Department created successfully", "departmentId": id})
+	c.JSON(http.StatusCreated, gin.H{"message": "Departments created successfully", "data": result})
 }
 
 // UpdateDepartment patches a department.
@@ -380,23 +392,19 @@ func FindOperatorsByShiftDept(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": op})
 }
 
-// CreateOperator creates an operator.
-func CreateOperator(c *gin.Context) {
-	var dto schema.Operator
-	if err := c.ShouldBindJSON(&dto); err != nil {
+// CreateOperators bulk-creates operators from a JSON array (or a single object).
+func CreateOperators(c *gin.Context) {
+	var payload json.RawMessage
+	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	if dto.EmpNo == "" || dto.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Operator emp no and name are required"})
-		return
-	}
-	id, err := operatorSvc.CreateOperator(dto, "system")
+	result, err := operatorSvc.CreateOperators(payload, "system")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"message": "Operator created successfully", "operatorId": id})
+	c.JSON(http.StatusCreated, gin.H{"message": "Operators created successfully", "data": result})
 }
 
 // UpdateOperator patches an operator.
@@ -496,23 +504,19 @@ func FindShiftOutputHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": rows})
 }
 
-// CreateShift creates a shift.
-func CreateShift(c *gin.Context) {
-	var payload map[string]interface{}
+// CreateShifts bulk-creates shifts from a JSON array (or a single object).
+func CreateShifts(c *gin.Context) {
+	var payload json.RawMessage
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
-	if payload["shift"] == nil && payload["shiftName"] == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Shift name is required"})
-		return
-	}
-	shiftID, err := shiftSvc.CreateShift(payload, "system")
+	result, err := shiftSvc.CreateShifts(payload, "system")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"message": "Shift created successfully", "shiftId": shiftID})
+	c.JSON(http.StatusCreated, gin.H{"message": "Shifts created successfully", "data": result})
 }
 
 // UpdateShift patches a shift.
@@ -631,4 +635,114 @@ func UpdateDevice(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Device updated successfully", "deviceId": deviceID})
+}
+
+// GetMachineType returns one machine type by id, including nested machines.
+func GetMachineType(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid machine type id"})
+		return
+	}
+	mt, err := machineTypeSvc.GetMachineTypeById(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if len(mt) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Machine type not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": mt})
+}
+
+// CreateMachineTypes bulk-creates machine types (and nested machines) from a JSON array (or a single object).
+func CreateMachineTypes(c *gin.Context) {
+	var payload json.RawMessage
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	result, err := machineTypeSvc.CreateMachineTypes(payload, "system")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "Machine types created successfully", "data": result})
+}
+
+// GetMachine returns one machine by id, including unit, hold reasons, performance, and current operation.
+func GetMachine(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid machine id"})
+		return
+	}
+	m, err := machineSvc.GetMachineById(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if len(m) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Machine not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": m})
+}
+
+// FindMachines lists machines by filters with cursor pagination.
+func FindMachines(c *gin.Context) {
+	machines, err := machineSvc.FindMachines(
+		c.Query("code"),
+		c.Query("name"),
+		helper.ParseInt64(c.Query("machineTypeId"), -1),
+		helper.ParseInt64(c.Query("departmentId"), -1),
+		helper.ParseInt64(c.Query("processId"), -1),
+		helper.ParseInt64(c.Query("cursor"), -1),
+		helper.ParseInt(c.Query("limit"), 20),
+	)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": machines})
+}
+
+// CreateMachines bulk-creates machines from a JSON array (or a single object).
+func CreateMachines(c *gin.Context) {
+	var payload json.RawMessage
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	result, err := machineSvc.CreateMachines(payload, "system")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"message": "Machines created successfully", "data": result})
+}
+
+// UpdateMachine patches a machine.
+func UpdateMachine(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid machine id"})
+		return
+	}
+	var updates map[string]interface{}
+	if err := c.ShouldBindJSON(&updates); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	machineID, err := machineSvc.UpdateMachine(id, updates, "system")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if machineID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Machine not found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Machine updated successfully", "machineId": machineID})
 }
