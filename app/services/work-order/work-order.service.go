@@ -1,11 +1,12 @@
 package workorder
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -13,11 +14,7 @@ import (
 	"github.com/thimira/production-tracer/internal/db"
 )
 
-// salesOrderPayload is the inbound Frappe sales-order request ({"data": {...}}).
-type salesOrderPayload struct {
-	Data salesOrder `json:"data"`
-}
-
+// salesOrder is the inbound Frappe sales-order shape (snake_case).
 type salesOrder struct {
 	Name         string           `json:"name"`
 	CustomerName string           `json:"customer_name"`
@@ -41,7 +38,17 @@ type salesOrderItem struct {
 	DeliveryDate                  string  `json:"delivery_date"`
 }
 
-// saveItem is the per-item shape passed to work_order_save as a JSON array.
+// nativeWorkOrder is the per-order shape passed to work_order_save.
+type nativeWorkOrder struct {
+	WorkOrderReference string     `json:"workOrderReference"`
+	CustomerName       string     `json:"customerName"`
+	PONo               string     `json:"poNo"`
+	Title              string     `json:"title"`
+	TotalQty           float64    `json:"totalQty"`
+	DeliveryDate       string     `json:"deliveryDate"`
+	Items              []saveItem `json:"items"`
+}
+
 type saveItem struct {
 	ItemReference string  `json:"itemReference"`
 	ItemCode      string  `json:"itemCode"`
@@ -54,29 +61,85 @@ type saveItem struct {
 	Qty           float64 `json:"qty"`
 }
 
-// saveResult is the row returned by work_order_save.
-type saveResult struct {
-	ID                 int64  `json:"id" gorm:"column:id"`
-	WorkOrderReference string `json:"workOrderReference" gorm:"column:work_order_reference"`
-	ItemCount          int    `json:"itemCount" gorm:"column:item_count"`
-}
-
 var htmlTagRe = regexp.MustCompile(`<[^>]*>`)
 
-// Save imports/creates a work order and its items from a Frappe sales-order payload.
+// Save imports/creates work orders and their items from a JSON array, a single
+// object, or a Frappe envelope ({"data": {...}} / {"data": [...]}).
 func Save(c *gin.Context) {
-	var payload salesOrderPayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
+	var raw json.RawMessage
+	if err := c.ShouldBindJSON(&raw); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error_message": "invalid request body: " + err.Error()})
 		return
 	}
 
-	so := payload.Data
-	if strings.TrimSpace(so.Name) == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error_message": "work order reference (data.name) is required"})
+	payload, err := normalizeWorkOrderSavePayload(raw)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error_message": err.Error()})
 		return
 	}
 
+	actor := c.GetHeader("X-User")
+	if actor == "" {
+		actor = "system"
+	}
+
+	result, err := db.CallProcedure[map[string]interface{}]("work_order_save", string(payload), actor)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"error_message": err.Error()})
+		return
+	}
+	utils.ProcessJsonData[[]interface{}](result, "insertedIds")
+	c.JSON(http.StatusOK, gin.H{"data": result})
+}
+
+func normalizeWorkOrderSavePayload(raw json.RawMessage) (json.RawMessage, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) == 0 {
+		return nil, fmt.Errorf("invalid request body")
+	}
+
+	var env struct {
+		Data json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(trimmed, &env); err == nil && len(bytes.TrimSpace(env.Data)) > 0 {
+		orders, err := mapFrappeSalesOrders(env.Data)
+		if err != nil {
+			return nil, err
+		}
+		for _, o := range orders {
+			if strings.TrimSpace(o.WorkOrderReference) == "" {
+				return nil, fmt.Errorf("work order reference (data.name) is required")
+			}
+		}
+		return json.Marshal(orders)
+	}
+
+	return trimmed, nil
+}
+
+func mapFrappeSalesOrders(data json.RawMessage) ([]nativeWorkOrder, error) {
+	trimmed := bytes.TrimSpace(data)
+	var sos []salesOrder
+	if len(trimmed) > 0 && trimmed[0] == '[' {
+		if err := json.Unmarshal(trimmed, &sos); err != nil {
+			return nil, fmt.Errorf("invalid request body: %w", err)
+		}
+	} else {
+		var so salesOrder
+		if err := json.Unmarshal(trimmed, &so); err != nil {
+			return nil, fmt.Errorf("invalid request body: %w", err)
+		}
+		sos = []salesOrder{so}
+	}
+
+	out := make([]nativeWorkOrder, 0, len(sos))
+	for _, so := range sos {
+		out = append(out, mapSalesOrder(so))
+	}
+	return out, nil
+}
+
+func mapSalesOrder(so salesOrder) nativeWorkOrder {
 	items := make([]saveItem, 0, len(so.Items))
 	for _, it := range so.Items {
 		items = append(items, saveItem{
@@ -91,33 +154,15 @@ func Save(c *gin.Context) {
 			Qty:           it.Qty,
 		})
 	}
-	itemsJSON, err := json.Marshal(items)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error_message": "failed to encode items: " + err.Error()})
-		return
+	return nativeWorkOrder{
+		WorkOrderReference: so.Name,
+		CustomerName:       so.CustomerName,
+		PONo:               so.PONo,
+		Title:              so.Title,
+		TotalQty:           so.TotalQty,
+		DeliveryDate:       strings.TrimSpace(so.DeliveryDate),
+		Items:              items,
 	}
-
-	actor := c.GetHeader("X-User")
-	if actor == "" {
-		actor = "system"
-	}
-
-	result, err := db.CallProcedure[saveResult](
-		"work_order_save",
-		so.Name,
-		nullable(so.CustomerName),
-		nullable(so.PONo),
-		nullable(so.Title),
-		int64(so.TotalQty),
-		parseDate(so.DeliveryDate),
-		actor,
-		string(itemsJSON),
-	)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"error_message": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": result})
 }
 
 // GetWorkOrderById returns a work order with its items.
@@ -178,26 +223,4 @@ func firstNonEmpty(a, b string) string {
 		return a
 	}
 	return b
-}
-
-// nullable returns nil for an empty string so the column is stored as NULL.
-func nullable(s string) any {
-	if strings.TrimSpace(s) == "" {
-		return nil
-	}
-	return s
-}
-
-// parseDate parses common Frappe date formats; nil (SQL NULL) if empty/unparseable.
-func parseDate(s string) any {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return nil
-	}
-	for _, layout := range []string{"2006-01-02", "2006-01-02 15:04:05", time.RFC3339} {
-		if t, err := time.Parse(layout, s); err == nil {
-			return t
-		}
-	}
-	return nil
 }
