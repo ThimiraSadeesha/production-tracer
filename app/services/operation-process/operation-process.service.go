@@ -52,8 +52,7 @@ func UpdateOperationProcess(id int, updates map[string]interface{}, updatedBy st
 
 	sequence := utils.GetPatchValue(updates, existing, "sequence")
 	planDateTime := utils.GetPatchValue(updates, existing, "planDateTime")
-	plannedQuantity := utils.GetPatchValue(updates, existing, "plannedQuantity")
-	expectedValue := utils.GetPatchValue(updates, existing, "expectedValue")
+	plannedValue := utils.GetPatchValue(updates, existing, "plannedValue")
 	estimateTime := utils.GetPatchValue(updates, existing, "estimateTime")
 	machineID := utils.GetPatchValue(updates, existing, "machineId")
 	processID := utils.GetPatchValue(updates, existing, "processId")
@@ -62,7 +61,7 @@ func UpdateOperationProcess(id int, updates map[string]interface{}, updatedBy st
 	remark := utils.GetPatchValue(updates, existing, "remark")
 
 	result, err := db.CallProcedure[map[string]interface{}]("operation_process_update",
-		id, sequence, planDateTime, plannedQuantity, expectedValue, estimateTime,
+		id, sequence, planDateTime, plannedValue, estimateTime,
 		machineID, processID, operationScope, status, remark, updatedBy,
 	)
 	if err != nil {
